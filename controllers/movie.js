@@ -8,7 +8,13 @@ const connection = require("../db/mysql_connection");
 exports.getMovies = async (req, res, next) => {
   let offset = req.query.offset;
   let limit = req.query.limit;
-  let query = `select * from movie limit ${offset},${limit}`;
+  let query = `select m.*, count(c.movie_id) as reply_cnt, round(avg(c.comment), 1) as avg_rating  
+  from movie as m
+  left join movie_comment as c
+  on m.id = c.movie_id
+  group by m.id
+  order by m.id 
+  limit ${offset}, ${limit};`;
   console.log(query);
   try {
     [rows] = await connection.query(query);
