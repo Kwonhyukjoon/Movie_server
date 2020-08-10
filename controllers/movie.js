@@ -12,7 +12,8 @@ exports.getMovies = async (req, res, next) => {
   console.log(query);
   try {
     [rows, fields] = await connection.query(query);
-    res.status(200).json({ success: true, items: rows, cnt: rows.length() });
+    let cnt = rows.length();
+    res.status(200).json({ success: true, items: rows, cnt: cnt });
   } catch (e) {
     res.status(500).json({ success: false, message: "DB Error", error: e });
   }
