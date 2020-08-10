@@ -85,7 +85,18 @@ exports.yearMovies = async (req, res, next) => {
 exports.attendanceMovies = async (req, res, next) => {
   let offset = req.query.offset;
   let limit = req.query.limit;
-  let query = `select * from movie order by attendance desc limit ${offset}, ${limit}`;
+  let order = req.query.order;
+
+  if (!offset || !limit) {
+    res.status(400).json({ message: "parameters setting error" });
+    return;
+  }
+
+  if (!order) {
+    order = "asc";
+  }
+
+  let query = `select * from movie order by attendance ${order} limit ${offset}, ${limit}`;
   try {
     [rows, fields] = await connection.query(query);
     res.status(200).json({ success: true, items: rows });
