@@ -8,12 +8,14 @@ const connection = require("../db/mysql_connection");
 exports.getMovies = async (req, res, next) => {
   let offset = req.query.offset;
   let limit = req.query.limit;
-  let user_id = req.user.id;
 
-  let query = `select m.*, if(f.id is not null, true , false) as is_favorite, count(c.movie_id) as reply_cnt, round(avg(c.comment), 1) as avg_rating 
+  let query = `select m.*, count(r.movie_id) as reply_cnt, 
+  round(avg(r.rate) , 1) as avg_rating
   from movie as m
-  left join movie_comment as c on m.id = c.movie_id 
-  left join favorite_movie as f on m.id = f.movie_id and f.user_id = 11 group by m.id order by m.id
+  left join movie_comment as r
+  on m.id = r.movie_id
+  group by m.id
+  order by m.id
   limit ${offset}, ${limit};`;
   console.log(query);
   try {
