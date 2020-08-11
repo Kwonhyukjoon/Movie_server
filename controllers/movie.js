@@ -8,12 +8,12 @@ const connection = require("../db/mysql_connection");
 exports.getMovies = async (req, res, next) => {
   let offset = req.query.offset;
   let limit = req.query.limit;
-  let query = `select m.*, count(c.movie_id) as reply_cnt, round(avg(c.comment), 1) as avg_rating  
+  let user_id = req.user.id;
+
+  let query = `select m.*, if(f.id is not null, true , false) as is_favorite, count(c.movie_id) as reply_cnt, round(avg(c.comment), 1) as avg_rating 
   from movie as m
-  left join movie_comment as c
-  on m.id = c.movie_id
-  group by m.id
-  order by m.id 
+  left join movie_comment as c on m.id = c.movie_id 
+  left join favorite_movie as f on m.id = f.movie_id and f.user_id = 11 group by m.id order by m.id
   limit ${offset}, ${limit};`;
   console.log(query);
   try {
@@ -45,6 +45,42 @@ exports.searchMovies = async (req, res, next) => {
   try {
     [rows, fields] = await connection.query(query);
     res.status(200).json({ success: true, items: rows });
+  } catch (e) {
+    res.status(500).json({ success: false, message: "DB Error", error: e });
+  }
+};
+
+// @desc      로그인한 영화 데이터를 불러오는 API
+// @route     GET/api/v1/movies?offset=0&limit=25/auth
+// @request   offset,limit
+// @response  title, genre, attendance, year
+
+exports.getAuthMovies = async (req, res, next) => {
+  let offset = req.query.offset;
+  let limit = req.query.limit;
+  let user_id = req.user.id;
+  if (!offset || !limit) {
+    res.status(400).json({ message: "parameters setting error" });
+    return;
+  }
+
+  let query = `select m.*,
+  if(f.id is not null, true, false) as favorite,
+  count(c.movie_id) as reply_cnt,
+  round(avg(c.comment), 1) as avg_rating  
+  from movie as m
+  left join movie_comment as c
+  on m.id = c.movie_id
+  left join favorite_movie as f
+  on m.id = f.movie_id and f.user_id = ${user_id}
+  group by m.id
+  order by m.id
+  limit ${offset}, ${limit};`;
+
+  console.log(query);
+  try {
+    [rows] = await connection.query(query);
+    res.status(200).json({ success: true, items: rows, cnt: rows.length });
   } catch (e) {
     res.status(500).json({ success: false, message: "DB Error", error: e });
   }

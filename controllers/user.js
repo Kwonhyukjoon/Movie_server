@@ -5,9 +5,9 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 // @desc    회원가입
-// @route   POST /api/v1/moviesUser  =>  나
-// @route   POST /api/v1/moviesUser/register
-// @route   POST /api/v1/moviesUser/signup
+// @route   POST /api/v1/user  =>  나
+// @route   POST /api/v1/user/register
+// @route   POST /api/v1/user/signup
 // @parameters  email, passwd
 exports.createUser = async (req, res, next) => {
   let email = req.body.email;
@@ -48,6 +48,7 @@ exports.createUser = async (req, res, next) => {
   let token = jwt.sign({ user_id: user_id }, process.env.ACCESS_TOKEN_SECRET);
   query = "insert into movie_token (token,user_id)values(?,?)";
   data = [token, user_id];
+  const conn = await connection.getConnection();
 
   try {
     [result] = await conn.query(query, data);
@@ -95,6 +96,24 @@ exports.loginUser = async (req, res, next) => {
     } catch (e) {
       res.status(500).json({ success: false, error: e });
     }
+  } catch (e) {
+    res.status(500).json({ success: false, error: e });
+  }
+};
+
+// @desc  로그아웃(현재의 기기 1개에 대한 로그아웃)
+// @route /api/v1/users/logout
+exports.logout = async (req, res, next) => {
+  // movie_token 테이블에서, 토큰 삭제해야 로그아웃이 되는것이다.
+  let user_id = req.user.id;
+  let token = req.user.token;
+
+  let query = "delete from movie_token where user_id =? and token = ?";
+  let data = [user_id, token];
+
+  try {
+    [result] = await connection.query(query, data);
+    res.status(200).json({ success: true });
   } catch (e) {
     res.status(500).json({ success: false, error: e });
   }
