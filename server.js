@@ -4,6 +4,7 @@ dotenv.config({ path: "./config/config.env" });
 const morgan = require("morgan");
 
 const movie = require("./routes/movie");
+const user = require("./routes/user");
 
 const app = express();
 
@@ -12,6 +13,7 @@ app.use(express.json());
 app.use(morgan("combined"));
 
 app.use("/api/v1/movie", movie);
+app.use("/api/v1/user", user);
 
 const PORT = process.env.PORT || 5400;
 
